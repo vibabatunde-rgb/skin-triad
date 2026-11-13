@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skin Triad — Teledermatology & Health Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        medical: { 50: '#ecfdf5', 100: '#d1fae5', 500: '#10b981', 600: '#059669', 700: '#047857', 900: '#064e3b' },
+                        clinical: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.4); border-radius: 9999px; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Strict Registration / Login Gate Overlay (Authenticated via Render API) -->
+    <div id="auth-gate-overlay" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl max-w-md w-full p-8 border border-slate-200 dark:border-slate-800 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-br from-medical-600 to-clinical-600 text-white flex items-center justify-center text-2xl shadow-lg overflow-hidden">
+                    <img id="auth-brand-logo-img" class="hidden w-full h-full object-cover" alt="Platform Logo">
+                    <i id="auth-brand-logo-icon" class="fa-solid fa-hand-holding-medical"></i>
+                </div>
+                <h1 id="auth-brand-title" class="text-xl font-extrabold tracking-tight">Skin Triad Health Portal</h1>
+                <p class="text-xs text-slate-400">Authorized & Registered Users Only. Sign in or create a verified patient/clinician account.</p>
+            </div>
+
+            <!-- Auth Mode Toggle -->
+            <div class="grid grid-cols-2 gap-2 p-1 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs font-bold">
+                <button id="btn-mode-login" onclick="switchAuthMode('login')" class="py-2 rounded-lg bg-white dark:bg-slate-700 shadow-sm text-medical-600">Sign In</button>
+                <button id="btn-mode-register" onclick="switchAuthMode('register')" class="py-2 rounded-lg text-slate-500">Register Account</button>
+            </div>
+
+            <!-- Login Form -->
+            <div id="auth-form-login" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold mb-1">Registered Email Address</label>
+                    <input type="email" id="login-email" placeholder="you@example.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                </div>
+                <button id="btn-login-submit" onclick="handleLogin()" class="w-full py-3.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-bold text-xs shadow-md transition">
+                    Access Health Ecosystem
+                </button>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="auth-form-register" class="space-y-3 text-xs hidden">
+                <div>
+                    <label class="block font-semibold mb-1">Full Name</label>
+                    <input type="text" id="reg-name" placeholder="Dr. / Mr. / Ms. Full Name" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Email Address</label>
+                    <input type="email" id="reg-email" placeholder="name@example.com" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Role</label>
+                    <select id="reg-role" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                        <option value="Patient">Patient / Caregiver</option>
+                        <option value="Health Worker">Community Health Worker (CHW)</option>
+                        <option value="Dermatologist">Dermatologist / Clinician</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold mb-1">Create Password (min 6 chars)</label>
+                    <input type="password" id="reg-password" placeholder="••••••••" class="w-full px-4 py-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+                </div>
+                <button id="btn-register-submit" onclick="handleRegister()" class="w-full py-3.5 rounded-xl bg-clinical-600 hover:bg-clinical-700 text-white font-bold text-xs shadow-md transition">
+                    Complete Registration & Enter
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-medical-600 to-clinical-600 text-white flex items-center justify-center text-lg shadow overflow-hidden">
+                    <img id="header-brand-logo-img" class="hidden w-full h-full object-cover" alt="Platform Logo">
+                    <i id="header-brand-logo-icon" class="fa-solid fa-hand-holding-medical"></i>
+                </div>
+                <div>
+                    <span id="brand-title-text" class="font-extrabold text-base tracking-tight block leading-none">Skin Triad</span>
+                    <span class="text-[11px] text-slate-400">Teledermatology & Pharmacy Network</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <span id="api-connection-badge" class="hidden md:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300">
+                    ● Connected to Render API
+                </span>
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+                <div class="hidden sm:flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-xs">
+                    <span id="current-user-name" class="font-bold">User</span>
+                    <span id="current-user-role" class="px-2 py-0.5 rounded-md bg-medical-100 dark:bg-medical-900 text-medical-700 dark:text-medical-300 text-[10px] font-bold">Patient</span>
+                </div>
+                <button onclick="logoutUser()" class="px-3 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/50 text-rose-600 text-xs font-bold hover:bg-rose-100 transition">
+                    <i class="fa-solid fa-right-from-bracket mr-1"></i>Logout
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="max-w-6xl mx-auto px-4 flex space-x-1 overflow-x-auto pb-2 text-xs font-semibold">
+            <button onclick="switchTab('triage')" id="nav-triage" class="nav-btn px-4 py-2 rounded-xl bg-medical-600 text-white whitespace-nowrap transition">
+                <i class="fa-solid fa-camera-retro mr-1.5"></i>AI Skin Triage
+            </button>
+            <button onclick="switchTab('telehealth')" id="nav-telehealth" class="nav-btn px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap transition">
+                <i class="fa-solid fa-video mr-1.5"></i>Consult Doctor
+            </button>
+            <button onclick="switchTab('history')" id="nav-history" class="nav-btn px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap transition">
+                <i class="fa-solid fa-file-medical mr-1.5"></i>Scan Reports
+            </button>
+            <button onclick="switchTab('marketplace')" id="nav-marketplace" class="nav-btn px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap transition">
+                <i class="fa-solid fa-pills mr-1.5"></i>Pharmacy & Delivery
+            </button>
+            <button onclick="switchTab('admin')" id="nav-admin" class="nav-btn hidden px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap transition">
+                <i class="fa-solid fa-shield-halved mr-1.5"></i>Admin Portal
+            </button>
+            <div id="dynamic-nav-tabs" class="flex space-x-1"></div>
+        </nav>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-6xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+        <!-- TAB 1: AI SKIN TRIAGE -->
+        <section id="tab-triage" class="tab-content space-y-6">
+            <div class="bg-gradient-to-r from-medical-600 to-clinical-600 rounded-3xl p-6 text-white shadow-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div class="space-y-1">
+                    <span class="px-2.5 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-wider">AI MobileNetV2 Screening</span>
+                    <h1 class="text-xl sm:text-2xl font-extrabold">Instant Skin Condition Triage</h1>
+                    <p class="text-xs text-white/90 max-w-xl">Capture a photo via camera or upload an image alongside symptom details for immediate preliminary AI triage and pharmacy routing.</p>
+                </div>
+                <div class="text-xs bg-slate-950/30 px-4 py-2.5 rounded-2xl border border-white/15">
+                    <div class="text-white/70 text-[10px]">Connected Backend Engine</div>
+                    <div class="font-mono font-bold text-emerald-300">● Live on Render (FastAPI)</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Intake & Image Capture -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <h2 class="font-bold text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-camera text-medical-600"></i>
+                        <span>1. Capture Lesion Photo & Symptom Intake</span>
+                    </h2>
+
+                    <div class="border-2 border-dashed border-slate-300 dark:border-slate-600 rounded-2xl p-6 text-center space-y-3 bg-slate-50 dark:bg-slate-900/50">
+                        <img id="lesion-preview" class="hidden max-h-48 mx-auto rounded-xl object-contain shadow">
+                        <div id="upload-placeholder" class="space-y-1">
+                            <i class="fa-solid fa-cloud-arrow-up text-3xl text-medical-600"></i>
+                            <div class="text-xs font-semibold">Upload lesion photo or snap live with camera</div>
+                        </div>
+                        <div class="flex flex-wrap justify-center gap-2 pt-2">
+                            <label class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 text-white text-xs font-semibold cursor-pointer hover:bg-slate-800 transition">
+                                <i class="fa-solid fa-folder-open mr-1.5"></i>Choose File
+                                <input type="file" id="lesion-file-input" accept="image/*" onchange="previewLesionFile(event)" class="hidden">
+                            </label>
+                            <button type="button" onclick="openCameraModal()" class="px-4 py-2.5 rounded-xl bg-clinical-600 hover:bg-clinical-700 text-white text-xs font-semibold transition">
+                                <i class="fa-solid fa-camera mr-1.5"></i>Snap via Camera
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 text-xs">
+                        <div>
+                            <label class="block font-semibold mb-1">Duration (Days)</label>
+                            <input type="number" id="intake-duration" value="4" min="1" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Body Location</label>
+                            <input type="text" id="intake-location" value="Forearm / Neck" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Itching Severity</label>
+                            <select id="intake-itching" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                                <option value="none">None</option>
+                                <option value="mild">Mild</option>
+                                <option value="moderate" selected>Moderate</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block font-semibold mb-1">Pain Level</label>
+                            <select id="intake-pain" class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                                <option value="none" selected>None</option>
+                                <option value="mild">Mild</option>
+                                <option value="severe">Severe</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button onclick="runAITriage()" id="btn-run-triage" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-medical-600 to-clinical-600 hover:opacity-95 text-white font-bold text-xs shadow-md transition">
+                        <i class="fa-solid fa-microscope mr-1.5"></i>Run AI Diagnostic Triage
+                    </button>
+                </div>
+
+                <!-- AI Triage Output Card -->
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between space-y-4">
+                    <div class="space-y-4">
+                        <h2 class="font-bold text-base flex items-center space-x-2">
+                            <i class="fa-solid fa-clipboard-check text-clinical-600"></i>
+                            <span>2. Clinical AI Triage Report</span>
+                        </h2>
+                        <div id="triage-result-box" class="p-5 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700 text-xs space-y-3">
+                            <div class="text-slate-400 text-center py-10">Upload or snap a skin photo and click "Run AI Diagnostic Triage" to view AI screening findings and recommended pharmacy treatments.</div>
+                        </div>
+                    </div>
+
+                    <div class="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 text-[11px] text-amber-800 dark:text-amber-300">
+                        <i class="fa-solid fa-circle-info mr-1"></i><strong>Clinical Notice:</strong> Preliminary screening support only. Always confirm prescriptions with a verified dermatologist or licensed pharmacist.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: TELEHEALTH (WEBRTC VIDEO & WEBSOCKET CHAT) -->
+        <section id="tab-telehealth" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <h2 class="font-bold text-base flex items-center space-x-2">
+                        <i class="fa-solid fa-user-doctor text-clinical-600"></i>
+                        <span>Verified Dermatologists</span>
+                    </h2>
+                    <div id="telehealth-doctors-list" class="space-y-3 text-xs"></div>
+                </div>
+
+                <div class="lg:col-span-2 bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h3 class="font-bold text-base" id="active-consult-doctor">Live Tele-Dermatology Room</h3>
+                            <p class="text-xs text-slate-400">Real-time WebSocket clinical messaging & WebRTC camera stream</p>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="startWebRTCCall()" class="px-4 py-2 rounded-xl bg-medical-600 hover:bg-medical-700 text-white text-xs font-bold">
+                                <i class="fa-solid fa-video mr-1"></i>Start Live Video Call
+                            </button>
+                            <button onclick="toggleFullScreenVideo()" class="px-3 py-2 rounded-xl bg-slate-800 text-white text-xs font-bold">
+                                <i class="fa-solid fa-expand"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="webrtc-video-container" class="relative rounded-2xl bg-slate-950 h-64 overflow-hidden flex items-center justify-center border border-slate-800">
+                        <video id="local-video" autoplay playsinline muted class="w-full h-full object-cover hidden"></video>
+                        <div id="video-placeholder" class="text-center text-slate-400 text-xs space-y-2">
+                            <i class="fa-solid fa-video-slash text-2xl"></i>
+                            <div>Camera is idle. Click "Start Live Video Call" to initialize WebRTC media stream.</div>
+                        </div>
+                        <button id="btn-end-call" onclick="endWebRTCCall()" class="hidden absolute bottom-4 px-5 py-2.5 rounded-full bg-rose-600 text-white text-xs font-bold shadow-lg">
+                            <i class="fa-solid fa-phone-slash mr-1"></i>End Video Call
+                        </button>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div id="telehealth-chat-messages" class="h-40 overflow-y-auto p-3 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 space-y-2 text-xs custom-scrollbar">
+                            <div class="text-slate-400 text-center py-4">Select a verified dermatologist and send your clinical question below.</div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" id="telehealth-chat-input" placeholder="Type symptoms or ask the dermatologist..." class="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs">
+                            <button onclick="sendChatMessage()" class="px-5 py-2.5 rounded-xl bg-clinical-600 hover:bg-clinical-700 text-white text-xs font-bold">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: PREVIOUS SCAN REPORTS & EXPORT -->
+        <section id="tab-history" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                <div>
+                    <h2 class="font-bold text-lg">Medical Triage History & Exportable Reports</h2>
+                    <p class="text-xs text-slate-400">Review AI screening results stored on the server and download official medical summaries.</p>
+                </div>
+                <div id="scan-history-list" class="space-y-3 text-xs"></div>
+            </div>
+        </section>
+
+        <!-- TAB 4: PHARMACY & DELIVERY MARKETPLACE -->
+        <section id="tab-marketplace" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-6">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-100 dark:border-slate-700 pb-4">
+                    <div>
+                        <h2 class="font-bold text-lg flex items-center space-x-2">
+                            <i class="fa-solid fa-pills text-medical-600"></i>
+                            <span>Partner Pharmacy & Therapeutic Marketplace</span>
+                        </h2>
+                        <p class="text-xs text-slate-400">Select a fulfillment pharmacy node, add treatments to your cart, and schedule doorstep delivery or pickup.</p>
+                    </div>
+                    <button onclick="openCartModal()" class="px-4 py-2.5 rounded-xl bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white text-xs font-bold transition shadow-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-cart-shopping text-medical-400"></i>
+                        <span>View Cart</span>
+                        <span id="cart-badge-count" class="px-2 py-0.5 bg-medical-600 text-white rounded-full text-[10px]">0</span>
+                    </button>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-xs">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-medical-100 dark:bg-medical-900/50 text-medical-600 flex items-center justify-center text-base">
+                            <i class="fa-solid fa-truck-fast"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold">Fulfillment Pharmacy & Delivery Hub</div>
+                            <div class="text-[11px] text-slate-400">Choose your nearest partner pharmacy for rapid dispatch</div>
+                        </div>
+                    </div>
+                    <div class="w-full md:w-auto flex flex-col sm:flex-row gap-2">
+                        <select id="marketplace-selected-pharmacy" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-medium"></select>
+                        <select id="marketplace-delivery-method" onchange="updateCartTotals()" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-xs font-medium">
+                            <option value="delivery">Doorstep Dispatch (₦1,500)</option>
+                            <option value="pickup">In-Store Pharmacy Pickup (Free)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2" id="marketplace-products-grid"></div>
+
+                <div class="pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+                    <h3 class="font-bold text-sm flex items-center space-x-2">
+                        <i class="fa-solid fa-box-open text-clinical-600"></i>
+                        <span>Active Pharmacy Dispatch & Delivery Orders</span>
+                    </h3>
+                    <div id="active-orders-list" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: SUPER ADMIN PORTAL (Accessible only when backend verifies Super Admin role) -->
+        <section id="tab-admin" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="text-slate-400">Registered Users</div>
+                    <div id="metric-registered-users" class="text-2xl font-extrabold text-medical-600 mt-1">0</div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="text-slate-400">Total AI Scans</div>
+                    <div id="metric-total-scans" class="text-2xl font-extrabold text-clinical-600 mt-1">0</div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="text-slate-400">Pharmacy Orders</div>
+                    <div id="metric-total-orders" class="text-2xl font-extrabold text-amber-600 mt-1">0</div>
+                </div>
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <div class="text-slate-400">Verified Doctors</div>
+                    <div id="metric-verified-docs" class="text-2xl font-extrabold text-emerald-600 mt-1">0</div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Payment Gateway & Webhooks -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-clinical-600"><i class="fa-solid fa-credit-card mr-1.5"></i>Payment Gateway & Webhooks</h3>
+                    <select id="gateway-provider" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <option value="Paystack">Paystack Live</option>
+                        <option value="Flutterwave">Flutterwave Live</option>
+                        <option value="Stripe">Stripe Live</option>
+                    </select>
+                    <input type="text" id="gateway-public-key" placeholder="Public Key (pk_live_...)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="password" id="gateway-secret-key" placeholder="Secret Key (sk_live_...)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="url" id="gateway-webhook-url" placeholder="Webhook URL (https://skin-triad.onrender.com/api/payments/paystack/webhook)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="url" id="gateway-callback-url" placeholder="Callback URL (https://skintriad.com/callback)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <button onclick="savePaymentGateway()" class="w-full py-2.5 rounded-xl bg-clinical-600 text-white font-bold">Sync Live Gateway to Backend</button>
+                </div>
+
+                <!-- Pharmacy Onboarding -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-medical-600"><i class="fa-solid fa-store mr-1.5"></i>Onboard Partner Pharmacy</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="new-pharmacy-name" placeholder="Pharmacy Name" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <input type="text" id="new-pharmacy-location" placeholder="Location / City" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    </div>
+                    <button onclick="onboardPharmacy()" class="w-full py-2.5 rounded-xl bg-medical-600 text-white font-bold">Onboard Pharmacy Node</button>
+                    <div id="admin-pharmacy-list" class="space-y-1.5 pt-2"></div>
+                </div>
+
+                <!-- Affiliate & Pharmacy Products Manager -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-emerald-600"><i class="fa-solid fa-tags mr-1.5"></i>Add Pharmacy / Affiliate Product</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="new-aff-name" placeholder="Product Name" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <input type="text" id="new-aff-price" placeholder="Price (e.g. ₦4,500)" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    </div>
+                    <input type="text" id="new-aff-desc" placeholder="Clinical Product Description" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="url" id="new-aff-image" placeholder="Product Image URL (https://...)" class="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <button onclick="addAffiliateProduct()" class="w-full py-2.5 rounded-xl bg-emerald-600 text-white font-bold">Publish Product to Marketplace</button>
+                    <div id="admin-affiliate-list" class="space-y-1.5 pt-2"></div>
+                </div>
+
+                <!-- Dermatologist Verification & SMTP Email -->
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-purple-600"><i class="fa-solid fa-user-check mr-1.5"></i>Verify Dermatologists & SMTP Server</h3>
+                    <div id="admin-doctors-list" class="space-y-1.5"></div>
+                    <div class="pt-3 border-t border-slate-100 dark:border-slate-700 space-y-2">
+                        <div class="font-bold">SMTP Email Credentials</div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <input type="text" id="smtp-host" placeholder="SMTP Host" class="col-span-2 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                            <input type="number" id="smtp-port" placeholder="Port (587)" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="smtp-username" placeholder="SMTP Username" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                            <input type="password" id="smtp-password" placeholder="SMTP Password" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="email" id="smtp-sender-email" placeholder="Sender Email" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                            <select id="smtp-encryption" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                                <option value="TLS">STARTTLS / TLS (Port 587)</option>
+                                <option value="SSL">SSL/TLS (Port 465)</option>
+                            </select>
+                        </div>
+                        <button onclick="saveSMTPConfig()" class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold">Sync SMTP Credentials</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dynamic Feature & Custom Module Builder -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                <h3 class="font-bold text-sm text-medical-600"><i class="fa-solid fa-puzzle-piece mr-1.5"></i>Dynamic Feature & Module Builder</h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input type="text" id="new-feature-title" placeholder="Feature Name (e.g. Lab Test Booking)" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="text" id="new-feature-icon" placeholder="FontAwesome Icon (e.g. fa-flask)" value="fa-sparkles" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    <input type="text" id="new-feature-cta" placeholder="Action Button Label" value="Launch Module" class="px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                </div>
+                <textarea id="new-feature-content" rows="2" placeholder="Describe what this feature does..." class="w-full px-3 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900"></textarea>
+                <button onclick="addDynamicFeature()" class="w-full py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-bold">Publish New Feature</button>
+                <div id="admin-custom-features-list" class="space-y-1.5 pt-2"></div>
+            </div>
+
+            <!-- Roled User Management & Platform Logo Branding -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-clinical-600"><i class="fa-solid fa-users-gear mr-1.5"></i>Provision Roled Users</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="admin-new-user-name" placeholder="Full Name" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <input type="email" id="admin-new-user-email" placeholder="Email Address" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <select id="admin-new-user-role" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                            <option value="Patient">Patient</option>
+                            <option value="Health Worker">Community Health Worker</option>
+                            <option value="Pharmacist">Partner Pharmacist</option>
+                            <option value="Dermatologist">Dermatologist</option>
+                            <option value="Super Admin">Super Admin</option>
+                        </select>
+                        <input type="password" id="admin-new-user-pass" placeholder="Initial Password (6+ chars)" class="px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                    </div>
+                    <button onclick="adminAddRoledUser()" class="w-full py-2.5 rounded-xl bg-clinical-600 hover:bg-clinical-700 text-white font-bold">Create Roled User Account</button>
+                    <div id="admin-roled-users-list" class="space-y-1.5 pt-2 max-h-44 overflow-y-auto custom-scrollbar"></div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-slate-200 dark:border-slate-700 space-y-3 text-xs">
+                    <h3 class="font-bold text-sm text-medical-600"><i class="fa-solid fa-image mr-1.5"></i>Platform Logo & Brand Identity</h3>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="url" id="admin-logo-url-input" placeholder="Logo Image URL (https://...)" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <label class="px-3.5 py-2 rounded-xl bg-slate-800 text-white font-semibold cursor-pointer text-center hover:bg-slate-700">
+                            <i class="fa-solid fa-upload mr-1"></i>Upload File
+                            <input type="file" accept="image/*" onchange="handleAdminLogoUpload(event)" class="hidden">
+                        </label>
+                    </div>
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="admin-brand-name-input" placeholder="Platform Brand Name" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <button onclick="applyBrandAndLogo()" class="px-5 py-2 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-bold">Save Logo & Name</button>
+                    </div>
+                    <div class="pt-2 border-t border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row gap-2">
+                        <input type="text" id="edit-footer-input" placeholder="Enter new footer copyright text..." class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900">
+                        <button onclick="updateFooterText()" class="px-5 py-2 rounded-xl bg-slate-900 dark:bg-clinical-600 text-white font-bold">Update Footer</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Custom Feature Viewer Section -->
+        <section id="tab-custom-feature" class="tab-content hidden space-y-6">
+            <div class="bg-white dark:bg-slate-800 rounded-3xl p-6 border border-slate-200 dark:border-slate-700 shadow-sm space-y-4">
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 rounded-2xl bg-medical-100 dark:bg-medical-900/50 text-medical-600 flex items-center justify-center text-xl">
+                        <i id="custom-feature-view-icon" class="fa-solid fa-sparkles"></i>
+                    </div>
+                    <div>
+                        <h2 id="custom-feature-view-title" class="font-extrabold text-lg">Custom Feature</h2>
+                        <span class="text-[11px] text-medical-600 font-semibold">Admin-Published Ecosystem Module</span>
+                    </div>
+                </div>
+                <p id="custom-feature-view-body" class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-100 dark:border-slate-700"></p>
+                <button id="custom-feature-view-cta" onclick="showToast('Action request logged with Skin Triad Clinical Operations!')" class="px-5 py-3 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-bold text-xs shadow-sm">
+                    Launch Module
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Camera Snap Modal -->
+    <div id="camera-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 rounded-3xl max-w-md w-full p-5 border border-slate-700 text-white space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-sm">Live Lesion Camera Capture</h3>
+                <button onclick="closeCameraModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <video id="camera-stream-video" autoplay playsinline class="w-full h-64 bg-black rounded-2xl object-cover"></video>
+            <canvas id="camera-snapshot-canvas" class="hidden"></canvas>
+            <div class="flex space-x-3">
+                <button onclick="captureCameraSnapshot()" class="flex-1 py-3 rounded-xl bg-medical-600 hover:bg-medical-700 font-bold text-xs">
+                    <i class="fa-solid fa-camera mr-1.5"></i>Capture Photo
+                </button>
+                <button onclick="closeCameraModal()" class="px-5 py-3 rounded-xl bg-slate-800 font-semibold text-xs">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pharmacy Shopping Cart & Checkout Modal -->
+    <div id="cart-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl space-y-5 flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-md flex items-center space-x-2">
+                    <i class="fa-solid fa-cart-shopping text-medical-600"></i>
+                    <span>Pharmacy Order & Delivery Checkout</span>
+                </h3>
+                <button onclick="closeCartModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div id="cart-items-container" class="flex-1 overflow-y-auto space-y-2.5 pr-1 custom-scrollbar text-xs min-h-[100px]"></div>
+
+            <div class="space-y-2.5 pt-3 border-t border-slate-100 dark:border-slate-700 text-xs" id="delivery-address-section">
+                <div>
+                    <label class="block font-medium mb-1">Delivery Address (Street, Area, Landmark)</label>
+                    <input type="text" id="checkout-delivery-address" placeholder="e.g. Plot 14, Industrial Estate Road, Agbara" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs">
+                </div>
+                <div>
+                    <label class="block font-medium mb-1">Recipient Phone Number</label>
+                    <input type="tel" id="checkout-phone" placeholder="e.g. +234 801 234 5678" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-xs">
+                </div>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 space-y-1.5 text-xs">
+                <div class="flex justify-between text-slate-500">
+                    <span>Subtotal:</span>
+                    <span id="cart-subtotal">₦0</span>
+                </div>
+                <div class="flex justify-between text-slate-500">
+                    <span>Dispatch / Delivery Fee:</span>
+                    <span id="cart-delivery-fee">₦1,500</span>
+                </div>
+                <div class="flex justify-between font-bold text-sm pt-1.5 border-t border-slate-200 dark:border-slate-700">
+                    <span>Total Payable:</span>
+                    <span class="text-medical-600" id="cart-grand-total">₦0</span>
+                </div>
+            </div>
+
+            <button onclick="placePharmacyOrder()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-medical-600 to-medical-700 hover:from-medical-700 hover:to-medical-800 text-white font-bold text-xs transition shadow-md flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-lock"></i>
+                <span>Confirm & Dispatch Pharmacy Order</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Report Viewer Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 border border-slate-200 dark:border-slate-700 shadow-2xl space-y-4 text-xs">
+            <div class="flex justify-between items-center border-b border-slate-100 dark:border-slate-700 pb-3">
+                <h3 class="font-bold text-sm">Clinical AI Triage Summary</h3>
+                <button onclick="document.getElementById('report-modal').classList.add('hidden')" class="text-slate-400"><i class="fa-solid fa-xmark text-base"></i></button>
+            </div>
+            <div id="report-modal-body" class="space-y-2 leading-relaxed"></div>
+            <button onclick="downloadActiveReport()" class="w-full py-3 rounded-xl bg-clinical-600 text-white font-bold">
+                <i class="fa-solid fa-download mr-1.5"></i>Download Official Medical Report (.TXT)
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast-banner" class="fixed bottom-5 right-5 z-50 hidden px-5 py-3 rounded-2xl bg-slate-900 text-white text-xs font-semibold shadow-xl border border-slate-700"></div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 dark:border-slate-800 py-5 text-center text-xs text-slate-400">
+        <span id="footer-copyright-text">© 2026 Skin Triad Health Ecosystem • Powered by OlaOlorun AI Diagnostics</span>
+    </footer>
+
+    <script>
+        // Production Render FastAPI Endpoint
+        const RENDER_BACKEND_URL = "https://skin-triad.onrender.com";
+
+        let authToken = localStorage.getItem("skintriad_jwt") || null;
+        let telehealthSocket = null;
+        let activeCameraStream = null;
+        let activeWebRTCStream = null;
+        let selectedDoctor = "Dr. Amina Bello, MBBS";
+        let currentReportText = "";
+
+        // Pure Client View State (Populated exclusively from Render API responses)
+        let clientState = {
+            currentUser: null,
+            brandName: "Skin Triad",
+            logoUrl: "",
+            footerText: "© 2026 Skin Triad Health Ecosystem • Powered by OlaOlorun AI Diagnostics",
+            registeredUsers: [],
+            scans: [],
+            cart: [],
+            pharmacyOrders: [],
+            doctors: [],
+            pharmacies: [],
+            affiliates: [],
+            customFeatures: [],
+            gatewayConfig: {},
+            smtpConfig: {}
+        };
+
+        function showToast(msg) {
+            const banner = document.getElementById('toast-banner');
+            if (!banner) return;
+            banner.innerText = msg;
+            banner.classList.remove('hidden');
+            clearTimeout(banner._timer);
+            banner._timer = setTimeout(() => banner.classList.add('hidden'), 3800);
+        }
+
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function authHeaders() {
+            return {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${authToken}`
+            };
+        }
+
+        async function loadEcosystemData() {
+            if (!authToken) return;
+            try {
+                const [stateRes, historyRes] = await Promise.all([
+                    fetch(`${RENDER_BACKEND_URL}/api/ecosystem/state`, { headers: authHeaders() }),
+                    fetch(`${RENDER_BACKEND_URL}/api/triage/history`, { headers: authHeaders() })
+                ]);
+
+                if (stateRes.status === 401) {
+                    logoutUser();
+                    return;
+                }
+
+                if (stateRes.ok) {
+                    const data = await stateRes.json();
+                    clientState.doctors = data.doctors || [];
+                    clientState.pharmacies = data.pharmacies || [];
+                    clientState.affiliates = data.products || [];
+                    clientState.customFeatures = data.custom_features || [];
+                    if (data.config) {
+                        if (data.config.brand_name) {
+                            clientState.brandName = data.config.brand_name;
+                            document.getElementById('brand-title-text').innerText = data.config.brand_name;
+                        }
+                        if (data.config.logo_url) {
+                            applyLogoPreview(data.config.logo_url);
+                        }
+                        if (data.config.footer_text) {
+                            clientState.footerText = data.config.footer_text;
+                            document.getElementById('footer-copyright-text').innerText = data.config.footer_text;
+                        }
+                    }
+                }
+
+                if (historyRes.ok) {
+                    clientState.scans = await historyRes.json();
+                }
+
+                if (clientState.currentUser?.role === "Super Admin") {
+                    document.getElementById('nav-admin').classList.remove('hidden');
+                    await loadAdminMetrics();
+                }
+
+                refreshAllViews();
+            } catch (err) {
+                showToast("Network warning: Unable to reach Render backend server.");
+            }
+        }
+
+        async function loadAdminMetrics() {
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/admin/metrics`, { headers: authHeaders() });
+                if (res.ok) {
+                    const m = await res.json();
+                    document.getElementById('metric-registered-users').innerText = m.registered_users;
+                    document.getElementById('metric-total-scans').innerText = m.total_scans;
+                    document.getElementById('metric-total-orders').innerText = m.total_orders;
+                    document.getElementById('metric-verified-docs').innerText = m.verified_doctors;
+                    clientState.registeredUsers = m.users || [];
+                    renderAdminRoledUsers();
+                }
+            } catch (e) {}
+        }
+
+        async function syncAdminChangesToBackend() {
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/admin/sync`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        doctors: clientState.doctors,
+                        pharmacies: clientState.pharmacies,
+                        products: clientState.affiliates,
+                        custom_features: clientState.customFeatures,
+                        config: {
+                            brand_name: clientState.brandName,
+                            logo_url: clientState.logoUrl,
+                            footer_text: clientState.footerText,
+                            paystack_public_key: clientState.gatewayConfig?.pubKey || "",
+                            paystack_secret_key: clientState.gatewayConfig?.secKey || "",
+                            smtp: clientState.smtpConfig || {}
+                        }
+                    })
+                });
+                if (!res.ok) {
+                    showToast("Error syncing administrative changes to server.");
+                }
+            } catch (e) {
+                showToast("Network error while saving admin updates.");
+            }
+        }
+
+        function switchAuthMode(mode) {
+            const loginForm = document.getElementById('auth-form-login');
+            const regForm = document.getElementById('auth-form-register');
+            const loginBtn = document.getElementById('btn-mode-login');
+            const regBtn = document.getElementById('btn-mode-register');
+            if (mode === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                loginBtn.classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-medical-600');
+                loginBtn.classList.remove('text-slate-500');
+                regBtn.classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-medical-600');
+                regBtn.classList.add('text-slate-500');
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+                regBtn.classList.add('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-medical-600');
+                regBtn.classList.remove('text-slate-500');
+                loginBtn.classList.remove('bg-white', 'dark:bg-slate-700', 'shadow-sm', 'text-medical-600');
+                loginBtn.classList.add('text-slate-500');
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+            if (!email || !password) {
+                showToast("Please enter your email and password.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-login-submit');
+            btn.disabled = true;
+            btn.innerText = "Authenticating with Render API...";
+
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.detail || "Authentication failed.");
+                    btn.disabled = false;
+                    btn.innerText = "Access Health Ecosystem";
+                    return;
+                }
+
+                authToken = data.access_token;
+                localStorage.setItem("skintriad_jwt", authToken);
+                clientState.currentUser = data.user;
+                document.getElementById('current-user-name').innerText = data.user.name;
+                document.getElementById('current-user-role').innerText = data.user.role;
+                document.getElementById('auth-gate-overlay').classList.add('hidden');
+                await loadEcosystemData();
+                showToast(`Welcome back, ${data.user.name}!`);
+            } catch (err) {
+                showToast("Unable to connect to Render authentication server.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Access Health Ecosystem";
+            }
+        }
+
+        async function handleRegister() {
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const role = document.getElementById('reg-role').value;
+            const password = document.getElementById('reg-password').value;
+
+            if (!name || !email.includes('@') || password.length < 6) {
+                showToast("Please provide a valid name, email, and 6+ character password.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-register-submit');
+            btn.disabled = true;
+            btn.innerText = "Creating Verified Account...";
+
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.detail || "Registration failed.");
+                    btn.disabled = false;
+                    btn.innerText = "Complete Registration & Enter";
+                    return;
+                }
+
+                authToken = data.access_token;
+                localStorage.setItem("skintriad_jwt", authToken);
+                clientState.currentUser = data.user;
+                document.getElementById('current-user-name').innerText = data.user.name;
+                document.getElementById('current-user-role').innerText = data.user.role;
+                document.getElementById('auth-gate-overlay').classList.add('hidden');
+                await loadEcosystemData();
+                showToast(`Account registered! Welcome, ${data.user.name}.`);
+            } catch (err) {
+                showToast("Unable to reach Render server to complete registration.");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Complete Registration & Enter";
+            }
+        }
+
+        function logoutUser() {
+            authToken = null;
+            localStorage.removeItem("skintriad_jwt");
+            clientState.currentUser = null;
+            if (telehealthSocket) {
+                telehealthSocket.close();
+                telehealthSocket = null;
+            }
+            document.getElementById('nav-admin').classList.add('hidden');
+            document.getElementById('auth-gate-overlay').classList.remove('hidden');
+            switchTab('triage');
+            showToast("Signed out securely.");
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-medical-600', 'text-white');
+                btn.classList.add('text-slate-500');
+            });
+            const target = document.getElementById(`tab-${tabId}`);
+            if (target) target.classList.remove('hidden');
+            const activeBtn = document.getElementById(`nav-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-medical-600', 'text-white');
+                activeBtn.classList.remove('text-slate-500');
+            }
+        }
+
+        function previewLesionFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.getElementById('lesion-preview');
+                img.src = e.target.result;
+                img.classList.remove('hidden');
+                document.getElementById('upload-placeholder').classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function openCameraModal() {
+            try {
+                activeCameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+                document.getElementById('camera-stream-video').srcObject = activeCameraStream;
+                document.getElementById('camera-modal').classList.remove('hidden');
+            } catch (err) {
+                showToast("Camera permission denied or unavailable on this device.");
+            }
+        }
+
+        function closeCameraModal() {
+            if (activeCameraStream) {
+                activeCameraStream.getTracks().forEach(t => t.stop());
+                activeCameraStream = null;
+            }
+            document.getElementById('camera-modal').classList.add('hidden');
+        }
+
+        function captureCameraSnapshot() {
+            const video = document.getElementById('camera-stream-video');
+            const canvas = document.getElementById('camera-snapshot-canvas');
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+            const img = document.getElementById('lesion-preview');
+            img.src = dataUrl;
+            img.classList.remove('hidden');
+            document.getElementById('upload-placeholder').classList.add('hidden');
+            closeCameraModal();
+            showToast("Lesion photo captured from camera!");
+        }
+
+        async function runAITriage() {
+            const preview = document.getElementById('lesion-preview');
+            if (preview.classList.contains('hidden') || !preview.src) {
+                showToast("Please capture or upload a skin photo first.");
+                return;
+            }
+
+            const btn = document.getElementById('btn-run-triage');
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-1.5"></i>Analyzing Lesion on Render AI...`;
+
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/triage/analyze`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        duration_days: parseInt(document.getElementById('intake-duration').value, 10) || 1,
+                        location: document.getElementById('intake-location').value,
+                        itching: document.getElementById('intake-itching').value,
+                        pain: document.getElementById('intake-pain').value,
+                        image_base64: preview.src
+                    })
+                });
+                const scanRecord = await res.json();
+                if (!res.ok) {
+                    showToast(scanRecord.detail || "AI Triage failed.");
+                    return;
+                }
+
+                clientState.scans.unshift(scanRecord);
+
+                document.getElementById('triage-result-box').innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-2">
+                        <span class="font-bold text-medical-600 text-sm">${scanRecord.condition}</span>
+                        <span class="px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">Confidence: ${scanRecord.confidence}</span>
+                    </div>
+                    <div class="space-y-1 text-slate-600 dark:text-slate-300">
+                        <div><strong>Triage Priority:</strong> ${scanRecord.severity}</div>
+                        <div><strong>Site & Duration:</strong> ${scanRecord.location} (${scanRecord.duration})</div>
+                        <div><strong>Recommended Protocol:</strong> ${scanRecord.recommendation}</div>
+                    </div>
+                    <div class="flex gap-2 pt-2">
+                        <button onclick="switchTab('marketplace')" class="px-3.5 py-2 rounded-xl bg-medical-600 text-white font-bold text-[11px]">Order Recommended Care</button>
+                        <button onclick="switchTab('telehealth')" class="px-3.5 py-2 rounded-xl bg-clinical-600 text-white font-bold text-[11px]">Consult Dermatologist</button>
+                    </div>
+                `;
+
+                renderScanHistory();
+                if (clientState.currentUser?.role === "Super Admin") await loadAdminMetrics();
+                showToast("AI Triage completed and stored on server!");
+            } catch (err) {
+                showToast("Unable to connect to AI Triage API.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-microscope mr-1.5"></i>Run AI Diagnostic Triage`;
+            }
+        }
+
+        function renderScanHistory() {
+            const container = document.getElementById('scan-history-list');
+            if (!container) return;
+            if (clientState.scans.length === 0) {
+                container.innerHTML = `<div class="text-slate-400 text-center py-8">No AI scan records yet. Run a triage scan to generate your first clinical report.</div>`;
+                return;
+            }
+            container.innerHTML = clientState.scans.map((s, i) => `
+                <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div>
+                        <div class="font-bold text-sm text-medical-600">${s.condition} <span class="text-[10px] text-slate-400 font-mono">(${s.id})</span></div>
+                        <div class="text-slate-500">${s.date} • ${s.location} • ${s.severity}</div>
+                    </div>
+                    <button onclick="openReportModal(${i})" class="px-4 py-2 rounded-xl bg-clinical-600 text-white font-bold">View & Export Report</button>
+                </div>
+            `).join('');
+        }
+
+        function openReportModal(idx) {
+            const s = clientState.scans[idx];
+            if (!s) return;
+            currentReportText = `SKIN TRIAD CLINICAL AI TRIAGE REPORT\nReport ID: ${s.id}\nDate: ${s.date}\nPatient: ${s.patient}\nAnatomical Site: ${s.location}\nDuration: ${s.duration}\nSymptoms: ${s.symptoms}\nPreliminary AI Finding: ${s.condition}\nConfidence Score: ${s.confidence}\nSeverity Level: ${s.severity}\nRecommended Care: ${s.recommendation}\n\nNote: Generated via Skin Triad AI Diagnostics. Confirm prescriptions with a licensed dermatologist.`;
+            document.getElementById('report-modal-body').innerHTML = currentReportText.replace(/\n/g, '<br>');
+            document.getElementById('report-modal').classList.remove('hidden');
+        }
+
+        function downloadActiveReport() {
+            const blob = new Blob([currentReportText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `SkinTriad_Clinical_Report_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Medical report downloaded to your device!");
+        }
+
+        function renderTelehealthDoctors() {
+            const list = document.getElementById('telehealth-doctors-list');
+            if (!list) return;
+            list.innerHTML = clientState.doctors.map(d => `
+                <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 space-y-2">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <div class="font-bold flex items-center space-x-1">
+                                <span>${d.name}</span>
+                                ${d.verified ? '<i class="fa-solid fa-circle-check text-clinical-500" title="Verified Specialist"></i>' : ''}
+                            </div>
+                            <div class="text-[11px] text-slate-400">${d.specialty}</div>
+                        </div>
+                        <span class="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-bold">Online</span>
+                    </div>
+                    <button onclick="selectConsultDoctor('${d.name}')" class="w-full py-2 rounded-xl bg-clinical-600 hover:bg-clinical-700 text-white font-bold">Connect Consultation</button>
+                </div>
+            `).join('');
+        }
+
+        function selectConsultDoctor(docName) {
+            selectedDoctor = docName;
+            document.getElementById('active-consult-doctor').innerText = `Consultation with ${docName}`;
+            const box = document.getElementById('telehealth-chat-messages');
+            box.innerHTML += `<div class="p-2.5 rounded-xl bg-clinical-50 dark:bg-clinical-950/60 text-clinical-700 dark:text-clinical-300"><strong>${docName}:</strong> Connected to live clinical room. Send your symptoms or start a video call.</div>`;
+            box.scrollTop = box.scrollHeight;
+
+            if (telehealthSocket) telehealthSocket.close();
+            const roomSlug = docName.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const wsUrl = RENDER_BACKEND_URL.replace(/^http/, 'ws') + `/ws/telehealth/${roomSlug}`;
+            telehealthSocket = new WebSocket(wsUrl);
+            telehealthSocket.onmessage = (event) => {
+                const msgBox = document.getElementById('telehealth-chat-messages');
+                msgBox.innerHTML += `<div class="p-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 mr-8"><strong>${docName}:</strong> ${event.data}</div>`;
+                msgBox.scrollTop = msgBox.scrollHeight;
+            };
+        }
+
+        async function startWebRTCCall() {
+            try {
+                activeWebRTCStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                const videoEl = document.getElementById('local-video');
+                videoEl.srcObject = activeWebRTCStream;
+                videoEl.classList.remove('hidden');
+                document.getElementById('video-placeholder').classList.add('hidden');
+                document.getElementById('btn-end-call').classList.remove('hidden');
+                showToast(`Live WebRTC session connected with ${selectedDoctor}`);
+            } catch (err) {
+                showToast("Unable to access camera/microphone for WebRTC call.");
+            }
+        }
+
+        function toggleFullScreenVideo() {
+            const container = document.getElementById('webrtc-video-container');
+            if (!document.fullscreenElement) {
+                container.requestFullscreen().catch(() => {});
+            } else {
+                document.exitFullscreen().catch(() => {});
+            }
+        }
+
+        function endWebRTCCall() {
+            if (activeWebRTCStream) {
+                activeWebRTCStream.getTracks().forEach(t => t.stop());
+                activeWebRTCStream = null;
+            }
+            const videoEl = document.getElementById('local-video');
+            videoEl.classList.add('hidden');
+            document.getElementById('video-placeholder').classList.remove('hidden');
+            document.getElementById('btn-end-call').classList.add('hidden');
+            showToast("Video consultation ended.");
+        }
+
+        function sendChatMessage() {
+            const input = document.getElementById('telehealth-chat-input');
+            const text = input.value.trim();
+            if (!text) return;
+            const box = document.getElementById('telehealth-chat-messages');
+            box.innerHTML += `<div class="p-2.5 rounded-xl bg-medical-600 text-white ml-8"><strong>You:</strong> ${text}</div>`;
+            if (telehealthSocket && telehealthSocket.readyState === WebSocket.OPEN) {
+                telehealthSocket.send(text);
+            }
+            input.value = '';
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function parsePrice(priceStr) {
+            return parseInt(String(priceStr).replace(/[^\d]/g, ''), 10) || 0;
+        }
+
+        function renderPharmacyDropdown() {
+            const sel = document.getElementById('marketplace-selected-pharmacy');
+            if (!sel) return;
+            sel.innerHTML = clientState.pharmacies.map(p => `<option value="${p.name}">${p.name} (${p.location})</option>`).join('');
+        }
+
+        function renderMarketplace() {
+            const grid = document.getElementById('marketplace-products-grid');
+            if (!grid) return;
+            grid.innerHTML = clientState.affiliates.map((item, idx) => `
+                <div class="rounded-2xl border border-slate-200 dark:border-slate-700 overflow-hidden bg-slate-50 dark:bg-slate-900/60 flex flex-col justify-between">
+                    <div>
+                        <img src="${item.image}" onerror="this.src='https://placehold.co/400x300/10b981/ffffff?text=Skin+Care'" alt="${item.name}" class="w-full h-36 object-cover">
+                        <div class="p-4 space-y-1.5">
+                            <div class="flex justify-between items-start gap-2">
+                                <h3 class="font-bold text-sm leading-snug">${item.name}</h3>
+                                <span class="font-extrabold text-medical-600 text-xs whitespace-nowrap">${item.price}</span>
+                            </div>
+                            <p class="text-[11px] text-slate-500 dark:text-slate-400">${item.desc}</p>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0">
+                        <button onclick="addToCart(${idx})" class="w-full py-2.5 rounded-xl bg-medical-600 hover:bg-medical-700 text-white font-bold text-xs transition">
+                            <i class="fa-solid fa-cart-plus mr-1.5"></i>Add to Pharmacy Cart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addToCart(productIdx) {
+            const item = clientState.affiliates[productIdx];
+            if (!item) return;
+            const existing = clientState.cart.find(c => c.name === item.name);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                clientState.cart.push({ ...item, qty: 1 });
+            }
+            updateCartBadge();
+            showToast(`Added "${item.name}" to pharmacy cart.`);
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-badge-count');
+            if (badge) {
+                badge.innerText = clientState.cart.reduce((sum, i) => sum + i.qty, 0);
+            }
+        }
+
+        function openCartModal() {
+            renderCartItems();
+            updateCartTotals();
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.add('hidden');
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            if (!container) return;
+            if (clientState.cart.length === 0) {
+                container.innerHTML = `<div class="text-center text-slate-400 py-6">Your pharmacy cart is empty.</div>`;
+                return;
+            }
+            container.innerHTML = clientState.cart.map((item, idx) => `
+                <div class="flex justify-between items-center p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700">
+                    <div>
+                        <div class="font-bold">${item.name}</div>
+                        <div class="text-slate-400">${item.price} × ${item.qty}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="changeCartQty(${idx}, -1)" class="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-700 font-bold">-</button>
+                        <span class="font-bold">${item.qty}</span>
+                        <button onclick="changeCartQty(${idx}, 1)" class="w-6 h-6 rounded-lg bg-slate-200 dark:bg-slate-700 font-bold">+</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function changeCartQty(idx, delta) {
+            clientState.cart[idx].qty += delta;
+            if (clientState.cart[idx].qty <= 0) {
+                clientState.cart.splice(idx, 1);
+            }
+            renderCartItems();
+            updateCartTotals();
+            updateCartBadge();
+        }
+
+        function updateCartTotals() {
+            const subtotal = clientState.cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0);
+            const method = document.getElementById('marketplace-delivery-method')?.value || 'delivery';
+            const fee = method === 'delivery' && subtotal > 0 ? 1500 : 0;
+            const addrSection = document.getElementById('delivery-address-section');
+            if (addrSection) addrSection.classList.toggle('hidden', method !== 'delivery');
+
+            document.getElementById('cart-subtotal').innerText = `₦${subtotal.toLocaleString()}`;
+            document.getElementById('cart-delivery-fee').innerText = fee === 0 ? 'Free' : `₦${fee.toLocaleString()}`;
+            document.getElementById('cart-grand-total').innerText = `₦${(subtotal + fee).toLocaleString()}`;
+        }
+
+        async function placePharmacyOrder() {
+            if (clientState.cart.length === 0) {
+                showToast("Your cart is empty.");
+                return;
+            }
+            const method = document.getElementById('marketplace-delivery-method').value;
+            const address = document.getElementById('checkout-delivery-address').value.trim();
+            const phone = document.getElementById('checkout-phone').value.trim();
+            const pharmacy = document.getElementById('marketplace-selected-pharmacy').value;
+
+            if (method === 'delivery' && (!address || !phone)) {
+                showToast("Please enter your delivery address and recipient phone number.");
+                return;
+            }
+
+            const subtotal = clientState.cart.reduce((sum, item) => sum + parsePrice(item.price) * item.qty, 0);
+            const fee = method === 'delivery' ? 1500 : 0;
+
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/pharmacy/orders`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        pharmacy,
+                        method: method === 'delivery' ? `Doorstep Dispatch to ${address}` : 'In-Store Pharmacy Pickup',
+                        address,
+                        phone,
+                        items: clientState.cart,
+                        total_amount_ngn: subtotal + fee
+                    })
+                });
+                const order = await res.json();
+                if (!res.ok) {
+                    showToast(order.detail || "Order failed.");
+                    return;
+                }
+
+                clientState.pharmacyOrders.unshift({
+                    ...order,
+                    itemsSummary: clientState.cart.map(c => `${c.name} (x${c.qty})`).join(', ')
+                });
+                clientState.cart = [];
+                updateCartBadge();
+                closeCartModal();
+                renderPharmacyOrders();
+                if (clientState.currentUser?.role === "Super Admin") await loadAdminMetrics();
+                showToast(`Order ${order.id} created on server with ${pharmacy}!`);
+            } catch (err) {
+                showToast("Network error submitting pharmacy order.");
+            }
+        }
+
+        function renderPharmacyOrders() {
+            const list = document.getElementById('active-orders-list');
+            if (!list) return;
+            if (clientState.pharmacyOrders.length === 0) {
+                list.innerHTML = `<div class="text-slate-400">No active pharmacy orders yet.</div>`;
+                return;
+            }
+            list.innerHTML = clientState.pharmacyOrders.map(o => `
+                <div class="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-700 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    <div>
+                        <div class="font-bold">${o.id} • ${o.pharmacy} <span class="text-medical-600">(${o.total})</span></div>
+                        <div class="text-slate-500">${o.itemsSummary || ''}</div>
+                        <div class="text-[11px] text-slate-400">${o.method}</div>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-bold text-[10px]">${o.status}</span>
+                </div>
+            `).join('');
+        }
+
+        async function savePaymentGateway() {
+            const provider = document.getElementById('gateway-provider').value;
+            const pubKey = document.getElementById('gateway-public-key').value.trim();
+            const secKey = document.getElementById('gateway-secret-key').value.trim();
+            const webhook = document.getElementById('gateway-webhook-url').value.trim();
+            const callback = document.getElementById('gateway-callback-url').value.trim();
+
+            if (!pubKey || !secKey) {
+                showToast("Please enter both Public Key and Secret Key.");
+                return;
+            }
+            clientState.gatewayConfig = { provider, pubKey, secKey, webhook, callback };
+            await syncAdminChangesToBackend();
+            showToast(`${provider} live gateway & secret key synced to Render!`);
+        }
+
+        async function onboardPharmacy() {
+            const name = document.getElementById('new-pharmacy-name').value.trim();
+            const location = document.getElementById('new-pharmacy-location').value.trim();
+            if (!name || !location) return;
+            clientState.pharmacies.push({ name, location, inventory: "Full stock" });
+            document.getElementById('new-pharmacy-name').value = '';
+            document.getElementById('new-pharmacy-location').value = '';
+            renderAdminPharmacies();
+            renderPharmacyDropdown();
+            await syncAdminChangesToBackend();
+            showToast(`Onboarded ${name}!`);
+        }
+
+        function renderAdminPharmacies() {
+            const list = document.getElementById('admin-pharmacy-list');
+            if (!list) return;
+            list.innerHTML = clientState.pharmacies.map((p, idx) => `
+                <div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
+                    <span><strong>${p.name}</strong> — ${p.location}</span>
+                    <button onclick="clientState.pharmacies.splice(${idx}, 1); renderAdminPharmacies(); renderPharmacyDropdown(); syncAdminChangesToBackend();" class="text-rose-500 font-bold">Remove</button>
+                </div>
+            `).join('');
+        }
+
+        async function addAffiliateProduct() {
+            const name = document.getElementById('new-aff-name').value.trim();
+            const price = document.getElementById('new-aff-price').value.trim();
+            const desc = document.getElementById('new-aff-desc').value.trim() || "Clinical dermatology formulation.";
+            const image = document.getElementById('new-aff-image').value.trim() || "https://placehold.co/400x300/10b981/ffffff?text=Therapeutic+Care";
+            if (!name || !price) return;
+            clientState.affiliates.push({ name, price, desc, image });
+            document.getElementById('new-aff-name').value = '';
+            document.getElementById('new-aff-price').value = '';
+            document.getElementById('new-aff-desc').value = '';
+            document.getElementById('new-aff-image').value = '';
+            renderAdminAffiliates();
+            renderMarketplace();
+            await syncAdminChangesToBackend();
+            showToast(`Published "${name}" to marketplace!`);
+        }
+
+        function renderAdminAffiliates() {
+            const list = document.getElementById('admin-affiliate-list');
+            if (!list) return;
+            list.innerHTML = clientState.affiliates.map((a, idx) => `
+                <div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
+                    <span><strong>${a.name}</strong> (${a.price})</span>
+                    <button onclick="clientState.affiliates.splice(${idx}, 1); renderAdminAffiliates(); renderMarketplace(); syncAdminChangesToBackend();" class="text-rose-500 font-bold">Delete</button>
+                </div>
+            `).join('');
+        }
+
+        function renderAdminDoctors() {
+            const list = document.getElementById('admin-doctors-list');
+            if (!list) return;
+            list.innerHTML = clientState.doctors.map((d, idx) => `
+                <div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
+                    <span><strong>${d.name}</strong> ${d.verified ? '✅' : '⏳'}</span>
+                    <div class="space-x-2">
+                        <button onclick="clientState.doctors[${idx}].verified = !clientState.doctors[${idx}].verified; renderAdminDoctors(); renderTelehealthDoctors(); syncAdminChangesToBackend();" class="text-clinical-600 font-bold">${d.verified ? 'Unverify' : 'Verify'}</button>
+                        <button onclick="clientState.doctors.splice(${idx}, 1); renderAdminDoctors(); renderTelehealthDoctors(); syncAdminChangesToBackend();" class="text-rose-500 font-bold">Remove</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function saveSMTPConfig() {
+            const host = document.getElementById('smtp-host').value.trim();
+            const port = document.getElementById('smtp-port').value.trim();
+            const username = document.getElementById('smtp-username').value.trim();
+            const password = document.getElementById('smtp-password').value;
+            const sender = document.getElementById('smtp-sender-email').value.trim();
+            const encryption = document.getElementById('smtp-encryption').value;
+
+            if (!host || !port || !username || !password || !sender) {
+                showToast("Please complete all SMTP host, port, username, password, and sender fields.");
+                return;
+            }
+            clientState.smtpConfig = { host, port, username, password, sender, encryption };
+            await syncAdminChangesToBackend();
+            showToast(`SMTP server (${host}:${port} via ${encryption}) synced!`);
+        }
+
+        async function addDynamicFeature() {
+            const title = document.getElementById('new-feature-title').value.trim();
+            const icon = document.getElementById('new-feature-icon').value.trim() || 'fa-sparkles';
+            const cta = document.getElementById('new-feature-cta').value.trim() || 'Launch Module';
+            const content = document.getElementById('new-feature-content').value.trim();
+            if (!title || !content) {
+                showToast("Enter a feature title and description.");
+                return;
+            }
+            clientState.customFeatures.push({ title, icon, cta, content });
+            document.getElementById('new-feature-title').value = '';
+            document.getElementById('new-feature-content').value = '';
+            renderDynamicFeatures();
+            await syncAdminChangesToBackend();
+            showToast(`New feature "${title}" published!`);
+        }
+
+        function renderDynamicFeatures() {
+            const navContainer = document.getElementById('dynamic-nav-tabs');
+            const adminList = document.getElementById('admin-custom-features-list');
+            if (navContainer) {
+                navContainer.innerHTML = clientState.customFeatures.map((f, idx) => `
+                    <button onclick="openCustomFeature(${idx})" class="nav-btn px-4 py-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 whitespace-nowrap transition">
+                        <i class="fa-solid ${f.icon} mr-1.5"></i>${f.title}
+                    </button>
+                `).join('');
+            }
+            if (adminList) {
+                adminList.innerHTML = clientState.customFeatures.map((f, idx) => `
+                    <div class="flex justify-between items-center p-2 rounded-xl bg-slate-50 dark:bg-slate-900">
+                        <span><i class="fa-solid ${f.icon} mr-1.5 text-medical-600"></i><strong>${f.title}</strong></span>
+                        <button onclick="clientState.customFeatures.splice(${idx}, 1); renderDynamicFeatures(); syncAdminChangesToBackend();" class="text-rose-500 font-bold">Remove</button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function openCustomFeature(idx) {
+            const f = clientState.customFeatures[idx];
+            if (!f) return;
+            document.getElementById('custom-feature-view-title').innerText = f.title;
+            document.getElementById('custom-feature-view-icon').className = `fa-solid ${f.icon}`;
+            document.getElementById('custom-feature-view-body').innerText = f.content;
+            document.getElementById('custom-feature-view-cta').innerText = f.cta;
+            switchTab('custom-feature');
+        }
+
+        async function updateFooterText() {
+            const val = document.getElementById('edit-footer-input').value.trim();
+            if (!val) return;
+            clientState.footerText = val;
+            document.getElementById('footer-copyright-text').innerText = val;
+            await syncAdminChangesToBackend();
+            showToast("Footer text synced!");
+        }
+
+        function applyLogoPreview(logoSrc) {
+            if (!logoSrc) return;
+            clientState.logoUrl = logoSrc;
+            ['header-brand-logo-img', 'auth-brand-logo-img'].forEach(id => {
+                const img = document.getElementById(id);
+                if (img) {
+                    img.src = logoSrc;
+                    img.classList.remove('hidden');
+                }
+            });
+            ['header-brand-logo-icon', 'auth-brand-logo-icon'].forEach(id => {
+                const icon = document.getElementById(id);
+                if (icon) icon.classList.add('hidden');
+            });
+        }
+
+        function handleAdminLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('admin-logo-url-input').value = e.target.result;
+                applyBrandAndLogo();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function applyBrandAndLogo() {
+            const logoSrc = document.getElementById('admin-logo-url-input').value.trim();
+            const brandName = document.getElementById('admin-brand-name-input').value.trim();
+
+            if (logoSrc) applyLogoPreview(logoSrc);
+            if (brandName) {
+                clientState.brandName = brandName;
+                document.getElementById('brand-title-text').innerText = brandName;
+                document.getElementById('auth-brand-title').innerText = `${brandName} Health Portal`;
+            }
+
+            await syncAdminChangesToBackend();
+            showToast("Platform logo & brand identity saved!");
+        }
+
+        async function adminAddRoledUser() {
+            const name = document.getElementById('admin-new-user-name').value.trim();
+            const email = document.getElementById('admin-new-user-email').value.trim().toLowerCase();
+            const role = document.getElementById('admin-new-user-role').value;
+            const password = document.getElementById('admin-new-user-pass').value;
+
+            if (!name || !email.includes('@') || password.length < 6) {
+                showToast("Enter valid name, email, and 6+ char password.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${RENDER_BACKEND_URL}/api/admin/users`, {
+                    method: "POST",
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, email, password, role })
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    showToast(data.detail || "Could not create user.");
+                    return;
+                }
+
+                document.getElementById('admin-new-user-name').value = '';
+                document.getElementById('admin-new-user-email').value = '';
+                document.getElementById('admin-new-user-pass').value = '';
+
+                await loadEcosystemData();
+                showToast(`Created ${name} (${role}) on server!`);
+            } catch (err) {
+                showToast("Error communicating with Render backend.");
+            }
+        }
+
+        function renderAdminRoledUsers() {
+            const list = document.getElementById('admin-roled-users-list');
+            if (!list) return;
+            list.innerHTML = clientState.registeredUsers.map(u => `
+                <div class="flex justify-between items-center p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900">
+                    <div>
+                        <span class="font-bold">${u.name}</span>
+                        <span class="text-slate-400 ml-1">(${u.email})</span>
+                        <span class="ml-1.5 px-2 py-0.5 rounded-md bg-clinical-100 dark:bg-clinical-950 text-clinical-700 dark:text-clinical-300 text-[10px] font-bold">${u.role}</span>
+                    </div>
+                    <span class="text-[10px] text-emerald-600 font-bold">Active</span>
+                </div>
+            `).join('');
+        }
+
+        function refreshAllViews() {
+            renderMarketplace();
+            renderPharmacyDropdown();
+            renderPharmacyOrders();
+            renderTelehealthDoctors();
+            renderScanHistory();
+            renderAdminPharmacies();
+            renderAdminAffiliates();
+            renderAdminDoctors();
+            renderAdminRoledUsers();
+            renderDynamicFeatures();
+            updateCartBadge();
+        }
+
+        window.onload = async () => {
+            if (authToken) {
+                try {
+                    const payload = JSON.parse(atob(authToken.split('.')[1]));
+                    if (payload.exp * 1000 > Date.now()) {
+                        clientState.currentUser = { name: payload.name, email: payload.sub, role: payload.role };
+                        document.getElementById('current-user-name').innerText = payload.name;
+                        document.getElementById('current-user-role').innerText = payload.role;
+                        document.getElementById('auth-gate-overlay').classList.add('hidden');
+                        await loadEcosystemData();
+                        return;
+                    }
+                } catch (e) {}
+                localStorage.removeItem("skintriad_jwt");
+                authToken = null;
+            }
+        };
+    </script>
+</body>
+</html>
